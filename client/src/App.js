@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import LandingPage from "./pages/LandingPage";
 
 function Login() {
   const handleLogin = async () => {
@@ -69,10 +70,11 @@ function PlaylistsPage() {
                 className="p-4 border rounded cursor-pointer hover:bg-gray-100"
               >
                 <img
-                  src={playlist.images[0]?.url || "/placeholder.png"}
+                  src={playlist.images?.[0]?.url || "/placeholder.png"}
                   alt={playlist.name}
                   className="w-full aspect-square object-cover mb-2"
                 />
+
                 <h3 className="font-bold">{playlist.name}</h3>
                 <p className="text-sm text-gray-600">
                   {playlist.tracks.total} tracks
@@ -97,9 +99,10 @@ function App() {
     <DndProvider backend={HTML5Backend}>
       <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/callback" element={<Navigate to="/playlists" />} />
+          {/* <Route path="/" element={<Login />} /> */}
+          {/* <Route path="/callback" element={<Navigate to="/playlists" />} /> */}
           <Route path="/playlists" element={<PlaylistsPage />} />
+          <Route path="/" element={<LandingPage />} />
         </Routes>
       </Router>
     </DndProvider>
@@ -107,19 +110,3 @@ function App() {
 }
 
 export default App;
-
-// import React from "react";
-// import { BrowserRouter as Router } from "react-router-dom";
-
-// function App() {
-//   return (
-//     <Router>
-//       <div className="App">
-//         <h1>Hello World</h1>
-//         <button onClick={() => console.log("clicked")}>Test Button</button>
-//       </div>
-//     </Router>
-//   );
-// }
-
-// export default App;
