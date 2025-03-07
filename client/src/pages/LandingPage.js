@@ -1,3 +1,4 @@
+// client/src/pages/LandingPage.js
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,18 +8,15 @@ export default function LandingPage() {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleLogin = async () => {
-    const response = await fetch("http://localhost:5001/login");
-    const data = await response.json();
-    window.location.href = data.url;
-  };
-
-  const handleConnect = () => {
     setIsLoading(true);
-    handleLogin();
-    // Simulate authentication process
-    setTimeout(() => {
-      navigate("/playlists");
-    }, 1000);
+    try {
+      const response = await fetch("http://localhost:5001/login");
+      const data = await response.json();
+      window.location.href = data.url;
+    } catch (error) {
+      console.error("Error during login:", error);
+      setIsLoading(false);
+    }
   };
 
   const buttonStyle = {
@@ -55,7 +53,7 @@ export default function LandingPage() {
         Easily modify your Spotify playlists
       </p>
       <button
-        onClick={handleConnect}
+        onClick={handleLogin}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
