@@ -1,4 +1,3 @@
-// server/index.js
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -29,6 +28,8 @@ app.get("/login", (req, res) => {
     "playlist-read-collaborative",
     "playlist-modify-public",
     "playlist-modify-private",
+    "user-read-private",
+    "user-read-email",
   ];
 
   const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
@@ -68,6 +69,20 @@ app.get("/playlists", async (req, res) => {
   }
 });
 
+// Get user's profile
+app.get("/user", async (req, res) => {
+  const accessToken = req.cookies.access_token;
+  spotifyApi.setAccessToken(accessToken);
+
+  try {
+    const data = await spotifyApi.getMe();
+    res.json(data.body);
+  } catch (error) {
+    console.error("Error getting user profile:", error);
+    res.status(500).json({ error: "Failed to fetch user profile" });
+  }
+});
+
 // Add track to playlist
 app.post("/playlists/:playlistId/tracks", async (req, res) => {
   const { playlistId } = req.params;
@@ -82,6 +97,13 @@ app.post("/playlists/:playlistId/tracks", async (req, res) => {
     console.error("Error adding track:", error);
     res.status(500).json({ error: "Failed to add track" });
   }
+});
+
+// Logout
+app.post("/logout", (req, res) => {
+  res.clearCookie("access_token");
+  res.clearCookie("refresh_token");
+  res.status(200).json({ message: "Logged out successfully" });
 });
 
 const PORT = process.env.PORT || 5001;

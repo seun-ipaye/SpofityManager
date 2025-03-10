@@ -1,12 +1,15 @@
-// client/src/pages/PlaylistsPage.js
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function PlaylistsPage() {
+  const navigate = useNavigate();
   const [playlists, setPlaylists] = useState([]);
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetchPlaylists();
+    fetchUserProfile();
   }, []);
 
   const fetchPlaylists = async () => {
@@ -21,20 +24,120 @@ function PlaylistsPage() {
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch("http://localhost:5001/user", {
+        credentials: "include",
+      });
+      const data = await response.json();
+      setUser(data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
   const handlePlaylistSelect = (playlist) => {
     if (selectedPlaylists.length < 2 && !selectedPlaylists.includes(playlist)) {
       setSelectedPlaylists((prev) => [...prev, playlist]);
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:5001/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+      });
+
+      navigate("/");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   return (
-    <div style={{ padding: "2rem" }}>
+    <div
+      style={{
+        padding: "2rem",
+        position: "relative",
+        backgroundColor: "black",
+      }}
+    >
+      {/* Back Button */}
+      <button
+        onClick={() => navigate("/")}
+        style={{
+          position: "absolute",
+          top: "1rem",
+          left: "1rem",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "1.5rem",
+          color: "white",
+        }}
+      >
+        ←
+      </button>
+
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        style={{
+          position: "absolute",
+          top: "1rem",
+          right: "1rem",
+          backgroundColor: "red",
+          color: "white",
+          border: "none",
+          padding: "0.5rem 1rem",
+          borderRadius: "0.5rem",
+          cursor: "pointer",
+        }}
+      >
+        Logout
+      </button>
+
+      {/* User Profile */}
+      {user && (
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            right: "5rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            color: "white",
+          }}
+        >
+          <img
+            src={user.images?.[0]?.url || "/placeholder.png"}
+            alt="User Avatar"
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              border: "2px solid white",
+            }}
+          />
+          <span>{user.display_name}</span>
+        </div>
+      )}
+
       {selectedPlaylists.length < 2 ? (
         <div>
           <h2
             style={{
               fontSize: "1.5rem",
               fontWeight: "bold",
+              color: "white",
               marginBottom: "1rem",
             }}
           >
@@ -59,9 +162,7 @@ function PlaylistsPage() {
                   borderRadius: "0.5rem",
                   cursor: "pointer",
                   transition: "background-color 0.2s",
-                  ":hover": {
-                    backgroundColor: "#f8f8f8",
-                  },
+                  backgroundColor: "rgb(15, 15, 15)",
                 }}
               >
                 <img
@@ -74,8 +175,13 @@ function PlaylistsPage() {
                     marginBottom: "0.5rem",
                   }}
                 />
-
-                <h3 style={{ fontWeight: "bold", marginBottom: "0.25rem" }}>
+                <h3
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "0.25rem",
+                    color: "white",
+                  }}
+                >
                   {playlist.name}
                 </h3>
                 <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
@@ -86,26 +192,7 @@ function PlaylistsPage() {
           </div>
         </div>
       ) : (
-        <div>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-              marginBottom: "1rem",
-            }}
-          >
-            playlists are selected
-          </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "1rem",
-            }}
-          >
-            assume the drag drop
-          </div>
-        </div>
+        navigate("/comparison")
       )}
     </div>
   );
