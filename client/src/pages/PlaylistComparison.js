@@ -148,22 +148,35 @@ function ComparisonPage() {
   }, []);
 
   const fetchTracks = async () => {
+    console.log("hi");
+
     const trackData = {};
     for (const playlist of selectedPlaylists) {
       try {
+        console.log(
+          `Fetching tracks for playlist: ${playlist.name} (${playlist.id})`
+        ); // Log playlist name & ID
         const response = await fetch(
           `http://localhost:5001/playlist/${playlist.id}/tracks`,
           {
             credentials: "include",
           }
         );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
         const data = await response.json();
-        trackData[playlist.id] = data.items;
+        console.log(`Received data for ${playlist.name}:`, data); // Log the full response
+
+        trackData[playlist.id] = data.items || []; // Make sure we store an array, even if empty
       } catch (error) {
         console.error(`Error fetching tracks for ${playlist.name}:`, error);
         trackData[playlist.id] = [];
       }
     }
+    console.log("Final track data:", trackData); // Log the final processed data
     setTracks(trackData);
   };
 
@@ -210,7 +223,14 @@ function ComparisonPage() {
         {selectedPlaylists.map((playlist) => (
           <div
             key={playlist.id}
-            style={{ textAlign: "center", maxWidth: "400px" }}
+            style={{
+              textAlign: "center",
+              width: "400px",
+              padding: "1rem",
+              backgroundColor: "#1a1a1a",
+              borderRadius: "10px",
+              boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
+            }}
           >
             <img
               src={playlist.images?.[0]?.url || "/placeholder.png"}
@@ -220,14 +240,23 @@ function ComparisonPage() {
                 height: "250px",
                 objectFit: "cover",
                 borderRadius: "10px",
+                marginBottom: "1rem",
+                justifySelf: "center",
               }}
             />
-            <h2 style={{ marginTop: "1rem" }}>{playlist.name}</h2>
+            <h2
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: "bold",
+                marginBottom: "1rem",
+              }}
+            >
+              {playlist.name}
+            </h2>
 
             {/* TRACK LIST */}
             <div
               style={{
-                marginTop: "1rem",
                 backgroundColor: "#1a1a1a",
                 borderRadius: "10px",
                 padding: "1rem",
@@ -264,6 +293,9 @@ function ComparisonPage() {
                           fontSize: "1rem",
                           fontWeight: "bold",
                           margin: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {track.track.name}

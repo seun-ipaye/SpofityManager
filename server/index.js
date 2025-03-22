@@ -69,17 +69,18 @@ app.get("/playlists", async (req, res) => {
   }
 });
 
-// Get user's profile
-app.get("/user", async (req, res) => {
+// Get tracks from a specific playlist
+app.get("/playlist/:playlistId/tracks", async (req, res) => {
+  const { playlistId } = req.params;
   const accessToken = req.cookies.access_token;
   spotifyApi.setAccessToken(accessToken);
 
   try {
-    const data = await spotifyApi.getMe();
+    const data = await spotifyApi.getPlaylistTracks(playlistId);
     res.json(data.body);
   } catch (error) {
-    console.error("Error getting user profile:", error);
-    res.status(500).json({ error: "Failed to fetch user profile" });
+    console.error("Error getting playlist tracks:", error);
+    res.status(500).json({ error: "Failed to fetch playlist tracks" });
   }
 });
 
