@@ -1,139 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import { useNavigate, useLocation } from "react-router-dom";
-// import { useDrag, useDrop } from "react-dnd";
-
-// function PlaylistComparison() {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-//   const { playlists } = location.state || { playlists: [] };
-
-//   const [sourcePlaylist, setSourcePlaylist] = useState(playlists[0] || null);
-//   const [destinationPlaylist, setDestinationPlaylist] = useState(
-//     playlists[1] || null
-//   );
-
-//   // ✅ Redirect back if no playlists were selected
-//   useEffect(() => {
-//     if (!sourcePlaylist || !destinationPlaylist) {
-//       navigate("/playlists");
-//     }
-//   }, [sourcePlaylist, destinationPlaylist, navigate]);
-
-//   const handleAddTrack = async (trackUri) => {
-//     try {
-//       await fetch("http://localhost:5001/playlists/move-track", {
-//         method: "POST",
-//         credentials: "include",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({
-//           fromPlaylistId: sourcePlaylist.id,
-//           toPlaylistId: destinationPlaylist.id,
-//           trackUri,
-//         }),
-//       });
-
-//       // Move the song visually after API success
-//       const trackToMove = sourcePlaylist.tracks.items.find(
-//         (track) => track.track.uri === trackUri
-//       );
-//       setDestinationPlaylist((prev) => ({
-//         ...prev,
-//         tracks: { items: [...prev.tracks.items, trackToMove] },
-//       }));
-//     } catch (error) {
-//       console.error("Error moving track:", error);
-//     }
-//   };
-
-//   const Track = ({ track, isSource }) => {
-//     const [{ isDragging }, drag] = useDrag({
-//       type: "track",
-//       item: { uri: track.track.uri },
-//       collect: (monitor) => ({
-//         isDragging: monitor.isDragging(),
-//       }),
-//     });
-
-//     const [{ isOver }, drop] = useDrop({
-//       accept: "track",
-//       drop: (item) => {
-//         if (isSource) return;
-//         handleAddTrack(item.uri);
-//       },
-//       collect: (monitor) => ({
-//         isOver: monitor.isOver(),
-//       }),
-//     });
-
-//     return (
-//       <div
-//         ref={isSource ? drag : drop}
-//         style={{
-//           padding: "0.5rem",
-//           border: "1px solid #e2e8f0",
-//           borderRadius: "0.5rem",
-//           marginBottom: "0.5rem",
-//           opacity: isDragging ? 0.5 : 1,
-//           backgroundColor: isOver ? "#2e2e2e" : "black",
-//           color: "white",
-//         }}
-//       >
-//         <p>{track.track.name}</p>
-//       </div>
-//     );
-//   };
-
-//   if (!sourcePlaylist || !destinationPlaylist) {
-//     return null; // Prevent crash while navigating
-//   }
-
-//   return (
-//     <div
-//       style={{
-//         display: "flex",
-//         justifyContent: "space-between",
-//         padding: "2rem",
-//         backgroundColor: "black",
-//       }}
-//     >
-//       {/* Back Button */}
-//       <div
-//         style={{
-//           position: "absolute",
-//           top: "1rem",
-//           left: "1rem",
-//           cursor: "pointer",
-//           color: "white",
-//         }}
-//         onClick={() => navigate("/playlists")}
-//       >
-//         ← Back
-//       </div>
-
-//       {/* Source Playlist */}
-//       <div style={{ flex: 1, marginRight: "1rem" }}>
-//         <h2 style={{ color: "white", marginBottom: "1rem" }}>
-//           {sourcePlaylist.name}
-//         </h2>
-//         {sourcePlaylist.tracks.items.map((track) => (
-//           <Track key={track.track.id} track={track} isSource={true} />
-//         ))}
-//       </div>
-
-//       {/* Destination Playlist */}
-//       <div style={{ flex: 1 }}>
-//         <h2 style={{ color: "white", marginBottom: "1rem" }}>
-//           {destinationPlaylist.name}
-//         </h2>
-//         {destinationPlaylist.tracks.items.map((track) => (
-//           <Track key={track.track.id} track={track} isSource={false} />
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default PlaylistComparison;
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -142,20 +6,16 @@ function ComparisonPage() {
   const navigate = useNavigate();
   const selectedPlaylists = location.state?.selectedPlaylists || [];
   const [tracks, setTracks] = useState({});
+  const [selectedSong, setSelectedSong] = useState(null);
 
   useEffect(() => {
     fetchTracks();
   }, []);
 
   const fetchTracks = async () => {
-    console.log("hi");
-
     const trackData = {};
     for (const playlist of selectedPlaylists) {
       try {
-        console.log(
-          `Fetching tracks for playlist: ${playlist.name} (${playlist.id})`
-        ); // Log playlist name & ID
         const response = await fetch(
           `http://localhost:5001/playlist/${playlist.id}/tracks`,
           {
@@ -168,16 +28,57 @@ function ComparisonPage() {
         }
 
         const data = await response.json();
-        console.log(`Received data for ${playlist.name}:`, data); // Log the full response
-
-        trackData[playlist.id] = data.items || []; // Make sure we store an array, even if empty
+        trackData[playlist.id] = data.items || [];
       } catch (error) {
-        console.error(`Error fetching tracks for ${playlist.name}:`, error);
         trackData[playlist.id] = [];
       }
     }
-    console.log("Final track data:", trackData); // Log the final processed data
     setTracks(trackData);
+  };
+
+  const handleSongClick = (song) => {
+    setSelectedSong(song);
+  };
+
+  const handleDragStart = (e, song) => {
+    e.dataTransfer.setData("song", JSON.stringify(song));
+    e.target.style.border = "2px solid green"; // Add green border on drag
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.style.border = ""; // Remove green border after drag
+  };
+
+  const handleDrop = (e, targetPlaylistId) => {
+    e.preventDefault();
+    const songData = e.dataTransfer.getData("song");
+    const song = JSON.parse(songData);
+    if (!song) return;
+
+    // Add the song to the target playlist
+    const updatedTracks = { ...tracks };
+    updatedTracks[targetPlaylistId] = [
+      ...(updatedTracks[targetPlaylistId] || []),
+      song,
+    ];
+
+    // Update the state
+    setTracks(updatedTracks);
+
+    // Optionally, make an API call to add the track to the playlist on the server
+    // Example:
+    // fetch(`http://localhost:5001/playlists/${targetPlaylistId}/tracks`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ trackUri: song.track.uri }),
+    //   credentials: "include",
+    // });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
   };
 
   return (
@@ -225,12 +126,13 @@ function ComparisonPage() {
             key={playlist.id}
             style={{
               textAlign: "center",
-              width: "400px",
-              padding: "1rem",
-              backgroundColor: "#1a1a1a",
+              width: "500px",
+              border: "1px solid #333",
               borderRadius: "10px",
-              boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
+              padding: "1rem",
             }}
+            onDrop={(e) => handleDrop(e, playlist.id)}
+            onDragOver={handleDragOver}
           >
             <img
               src={playlist.images?.[0]?.url || "/placeholder.png"}
@@ -240,23 +142,14 @@ function ComparisonPage() {
                 height: "250px",
                 objectFit: "cover",
                 borderRadius: "10px",
-                marginBottom: "1rem",
                 justifySelf: "center",
               }}
             />
-            <h2
-              style={{
-                fontSize: "1.25rem",
-                fontWeight: "bold",
-                marginBottom: "1rem",
-              }}
-            >
-              {playlist.name}
-            </h2>
+            <h2 style={{ marginTop: "1rem" }}>{playlist.name}</h2>
 
-            {/* TRACK LIST */}
             <div
               style={{
+                marginTop: "1rem",
                 backgroundColor: "#1a1a1a",
                 borderRadius: "10px",
                 padding: "1rem",
@@ -265,7 +158,7 @@ function ComparisonPage() {
               }}
             >
               {tracks[playlist.id]?.length > 0 ? (
-                tracks[playlist.id].map((track, index) => (
+                tracks[playlist.id].map((track) => (
                   <div
                     key={track.track.id}
                     style={{
@@ -274,7 +167,15 @@ function ComparisonPage() {
                       gap: "1rem",
                       padding: "0.5rem 0",
                       borderBottom: "1px solid #333",
+                      border:
+                        selectedSong?.track.id === track.track.id
+                          ? "2px solid green"
+                          : "none", // Highlight selected song
                     }}
+                    onClick={() => handleSongClick(track)}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, track)}
+                    onDragEnd={handleDragEnd}
                   >
                     <img
                       src={
