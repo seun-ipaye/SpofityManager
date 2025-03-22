@@ -67,6 +67,8 @@ function PlaylistsPage() {
         padding: "2rem",
         position: "relative",
         backgroundColor: "black",
+        minHeight: "100vh",
+        color: "white",
       }}
     >
       {/* Back Button */}
@@ -192,7 +194,31 @@ function PlaylistsPage() {
           </div>
         </div>
       ) : (
-        navigate("/comparison")
+        <div style={{ marginTop: "2rem" }}>
+          <h2
+            style={{ fontSize: "1.5rem", fontWeight: "bold", color: "white" }}
+          >
+            Ready to compare!
+          </h2>
+          <button
+            onClick={() =>
+              navigate("/comparison", { state: { selectedPlaylists } })
+            }
+            style={{
+              backgroundColor: "#1DB954",
+              color: "white",
+              padding: "0.75rem 1.5rem",
+              borderRadius: "0.5rem",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              marginTop: "1rem",
+              border: "none",
+            }}
+          >
+            Compare Playlists
+          </button>
+        </div>
       )}
     </div>
   );
