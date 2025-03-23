@@ -32,6 +32,7 @@ function ComparisonPage() {
       }
     }
     setTracks(trackData);
+    // console.log("tracks:", trackData);
   };
 
   const handleSongClick = (song) => {
@@ -49,10 +50,24 @@ function ComparisonPage() {
 
   const handleDrop = async (e, playlistId) => {
     e.preventDefault();
-    const songURI = e.dataTransfer.getData("songURI"); // Retrieve URI from drag event
+    const songURI = e.dataTransfer.getData("songURI");
     if (!songURI) {
       console.error("No song URI found for drop event.");
       return;
+    }
+
+    console.log("tracks", tracks);
+    const strack = tracks[playlistId];
+    console.log("strack", strack);
+
+    // Check for duplicates
+    for (const t of strack) {
+      // Assuming strack is an array of track objects
+      console.log("uri", t?.track?.uri);
+      if (t?.track?.uri === songURI) {
+        alert("This song is already in this playlist!");
+        return;
+      }
     }
 
     const encodedUri = encodeURIComponent(songURI);
@@ -83,7 +98,7 @@ function ComparisonPage() {
       }
 
       console.log("Track added successfully:", await response.json());
-      fetchTracks();
+      fetchTracks(); // Refresh the tracks after adding
     } catch (error) {
       console.error("Failed to add track:", error);
     }
