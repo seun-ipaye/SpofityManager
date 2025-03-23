@@ -6,6 +6,7 @@ require("dotenv").config();
 
 const app = express();
 
+// Middleware
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -21,7 +22,16 @@ const spotifyApi = new SpotifyWebApi({
   redirectUri: "http://localhost:5001/callback",
 });
 
-// Login endpoint
+// Get stored access token
+app.get("/token", (req, res) => {
+  const accessToken = req.cookies.access_token;
+  if (!accessToken) {
+    return res.status(401).json({ error: "Access token not found" });
+  }
+  res.json({ access_token: accessToken });
+});
+
+// 🔑 Login Endpoint - Redirects user to Spotify Auth
 app.get("/login", (req, res) => {
   const scopes = [
     "playlist-read-private",
@@ -31,12 +41,11 @@ app.get("/login", (req, res) => {
     "user-read-private",
     "user-read-email",
   ];
-
   const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
   res.json({ url: authorizeURL });
 });
 
-// Callback endpoint
+// 🔄 Callback Endpoint - Handles Token Exchange
 app.get("/callback", async (req, res) => {
   const { code } = req.query;
 
@@ -44,7 +53,7 @@ app.get("/callback", async (req, res) => {
     const data = await spotifyApi.authorizationCodeGrant(code);
     const { access_token, refresh_token } = data.body;
 
-    // Store tokens in cookie
+    // Store tokens in HTTP-only cookies
     res.cookie("access_token", access_token, { httpOnly: true });
     res.cookie("refresh_token", refresh_token, { httpOnly: true });
 
@@ -55,7 +64,7 @@ app.get("/callback", async (req, res) => {
   }
 });
 
-// Get user's playlists
+// 🎵 Get User's Playlists
 app.get("/playlists", async (req, res) => {
   const accessToken = req.cookies.access_token;
   spotifyApi.setAccessToken(accessToken);
@@ -69,7 +78,7 @@ app.get("/playlists", async (req, res) => {
   }
 });
 
-// Get tracks from a specific playlist
+// 🎶 Get Tracks from a Playlist
 app.get("/playlist/:playlistId/tracks", async (req, res) => {
   const { playlistId } = req.params;
   const accessToken = req.cookies.access_token;
@@ -84,7 +93,7 @@ app.get("/playlist/:playlistId/tracks", async (req, res) => {
   }
 });
 
-// Add track to playlist
+// ➕ Add Track to a Playlist
 app.post("/playlists/:playlistId/tracks", async (req, res) => {
   const { playlistId } = req.params;
   const { trackUri } = req.body;
@@ -100,13 +109,14 @@ app.post("/playlists/:playlistId/tracks", async (req, res) => {
   }
 });
 
-// Logout
+// 🚪 Logout Endpoint
 app.post("/logout", (req, res) => {
   res.clearCookie("access_token");
   res.clearCookie("refresh_token");
   res.status(200).json({ message: "Logged out successfully" });
 });
 
+// 🚀 Start Server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

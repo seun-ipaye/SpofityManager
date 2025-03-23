@@ -6,6 +6,7 @@ function PlaylistsPage() {
   const [playlists, setPlaylists] = useState([]);
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [user, setUser] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchPlaylists();
@@ -37,41 +38,34 @@ function PlaylistsPage() {
   };
 
   const handlePlaylistSelect = (playlist) => {
-    if (selectedPlaylists.length < 2 && !selectedPlaylists.includes(playlist)) {
-      setSelectedPlaylists((prev) => [...prev, playlist]);
+    if (selectedPlaylists.includes(playlist)) return;
+
+    if (selectedPlaylists.length === 1) {
+      setSelectedPlaylists([...selectedPlaylists, playlist]);
+      setShowModal(true); // Show confirmation popup
+    } else {
+      setSelectedPlaylists([playlist]);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:5001/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+  const confirmComparison = () => {
+    navigate("/comparison", { state: { selectedPlaylists } });
+  };
 
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
-      });
-
-      navigate("/");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+  const cancelComparison = () => {
+    setSelectedPlaylists([]);
+    setShowModal(false);
   };
 
   return (
     <div
       style={{
         padding: "2rem",
-        position: "relative",
         backgroundColor: "black",
         minHeight: "100vh",
         color: "white",
       }}
     >
-      {/* Back Button */}
       <button
         onClick={() => navigate("/")}
         style={{
@@ -88,9 +82,18 @@ function PlaylistsPage() {
         ←
       </button>
 
-      {/* Logout Button */}
       <button
-        onClick={handleLogout}
+        onClick={() => {
+          document.cookie.split(";").forEach((c) => {
+            document.cookie = c
+              .replace(/^ +/, "")
+              .replace(
+                /=.*/,
+                "=;expires=" + new Date().toUTCString() + ";path=/"
+              );
+          });
+          navigate("/");
+        }}
         style={{
           position: "absolute",
           top: "1rem",
@@ -106,7 +109,6 @@ function PlaylistsPage() {
         Logout
       </button>
 
-      {/* User Profile */}
       {user && (
         <div
           style={{
@@ -116,7 +118,6 @@ function PlaylistsPage() {
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
-            color: "white",
           }}
         >
           <img
@@ -133,90 +134,110 @@ function PlaylistsPage() {
         </div>
       )}
 
-      {selectedPlaylists.length < 2 ? (
-        <div>
-          <h2
-            style={{
-              fontSize: "1.5rem",
-              fontWeight: "bold",
-              color: "white",
-              marginBottom: "1rem",
-            }}
-          >
-            Select two playlists to compare
-          </h2>
+      <h2
+        style={{
+          fontSize: "1.5rem",
+          fontWeight: "bold",
+          color: "white",
+          marginBottom: "1rem",
+        }}
+      >
+        Select two playlists to compare
+      </h2>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: "1rem",
+        }}
+      >
+        {playlists.map((playlist) => (
           <div
+            key={playlist.id}
+            onClick={() => handlePlaylistSelect(playlist)}
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "1rem",
+              display: "flex",
+              flexDirection: "column",
+              padding: "1rem",
+              border: selectedPlaylists.includes(playlist)
+                ? "2px solid #1DB954"
+                : "1px solid #e2e8f0",
+              borderRadius: "0.5rem",
+              cursor: "pointer",
+              backgroundColor: "rgb(15, 15, 15)",
             }}
           >
-            {playlists.map((playlist) => (
-              <div
-                key={playlist.id}
-                onClick={() => handlePlaylistSelect(playlist)}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  padding: "1rem",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "0.5rem",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                  backgroundColor: "rgb(15, 15, 15)",
-                }}
-              >
-                <img
-                  src={playlist.images?.[0]?.url || "/placeholder.png"}
-                  alt={playlist.name}
-                  style={{
-                    width: "100%",
-                    aspectRatio: "1 / 1",
-                    objectFit: "cover",
-                    marginBottom: "0.5rem",
-                  }}
-                />
-                <h3
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "0.25rem",
-                    color: "white",
-                  }}
-                >
-                  {playlist.name}
-                </h3>
-                <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-                  {playlist.tracks.total} tracks
-                </p>
-              </div>
-            ))}
+            <img
+              src={playlist.images?.[0]?.url || "/placeholder.png"}
+              alt={playlist.name}
+              style={{
+                width: "100%",
+                aspectRatio: "1 / 1",
+                objectFit: "cover",
+                marginBottom: "0.5rem",
+              }}
+            />
+            <h3
+              style={{
+                fontWeight: "bold",
+                marginBottom: "0.25rem",
+                color: "white",
+              }}
+            >
+              {playlist.name}
+            </h3>
+            <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+              {playlist.tracks.total} tracks
+            </p>
           </div>
-        </div>
-      ) : (
-        <div style={{ marginTop: "2rem" }}>
-          <h2
-            style={{ fontSize: "1.5rem", fontWeight: "bold", color: "white" }}
-          >
-            Ready to compare!
-          </h2>
+        ))}
+      </div>
+
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "#222",
+            padding: "2rem",
+            borderRadius: "0.5rem",
+            textAlign: "center",
+            zIndex: 1000,
+          }}
+        >
+          <h3 style={{ color: "white", marginBottom: "1rem" }}>
+            Do you want to compare "{selectedPlaylists[0].name}" and "
+            {selectedPlaylists[1].name}"?
+          </h3>
           <button
-            onClick={() =>
-              navigate("/comparison", { state: { selectedPlaylists } })
-            }
+            onClick={confirmComparison}
             style={{
               backgroundColor: "#1DB954",
               color: "white",
               padding: "0.75rem 1.5rem",
               borderRadius: "0.5rem",
-              fontSize: "1rem",
               fontWeight: "bold",
               cursor: "pointer",
-              marginTop: "1rem",
-              border: "none",
+              marginRight: "1rem",
             }}
           >
-            Compare Playlists
+            Confirm
+          </button>
+          <button
+            onClick={cancelComparison}
+            style={{
+              backgroundColor: "red",
+              color: "white",
+              padding: "0.75rem 1.5rem",
+              borderRadius: "0.5rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            Go Back
           </button>
         </div>
       )}

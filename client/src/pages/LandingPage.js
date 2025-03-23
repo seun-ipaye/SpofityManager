@@ -1,9 +1,6 @@
-// client/src/pages/LandingPage.js
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 export default function LandingPage() {
-  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -12,22 +9,11 @@ export default function LandingPage() {
     try {
       const response = await fetch("http://localhost:5001/login");
       const data = await response.json();
-      window.location.href = data.url;
+      window.location.href = data.url; // Redirect user to Spotify login
     } catch (error) {
       console.error("Error during login:", error);
       setIsLoading(false);
     }
-  };
-
-  const buttonStyle = {
-    backgroundColor: isHovered ? "green" : "white",
-    color: isHovered ? "white" : "black",
-    transform: isHovered ? "scale(1.05)" : "scale(1)",
-    transition: "all 0.2s ease-in-out",
-    padding: "0.5rem 1.5rem",
-    border: "none",
-    borderRadius: "0.5rem",
-    cursor: "pointer",
   };
 
   return (
@@ -40,7 +26,6 @@ export default function LandingPage() {
         minHeight: "100vh",
         backgroundColor: "black",
         color: "white",
-        padding: "1.5rem",
         textAlign: "center",
       }}
     >
@@ -57,9 +42,15 @@ export default function LandingPage() {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
-          ...buttonStyle,
-          opacity: isLoading ? 0.5 : 1,
+          backgroundColor: isHovered ? "green" : "white",
+          color: isHovered ? "white" : "black",
+          transform: isHovered ? "scale(1.05)" : "scale(1)",
+          transition: "all 0.2s ease-in-out",
+          padding: "0.5rem 1.5rem",
+          border: "none",
+          borderRadius: "0.5rem",
           cursor: isLoading ? "not-allowed" : "pointer",
+          opacity: isLoading ? 0.5 : 1,
         }}
         disabled={isLoading}
       >
