@@ -7,9 +7,11 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
+const allowedOrigins = ["http://localhost:3000", "https://www.sptfymngr.site"];
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://www.sptfymngr.site"],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
