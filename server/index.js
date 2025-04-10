@@ -9,17 +9,18 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://www.sptfymngr.site"],
     credentials: true,
   })
 );
+
 app.use(cookieParser());
 app.use(express.json());
 
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "http://localhost:5001/callback",
+  redirectUri: "https://spotify-manager.vercel.app/callback", // ✅ use this
 });
 
 // Get stored access token
@@ -54,13 +55,21 @@ app.get("/callback", async (req, res) => {
     const { access_token, refresh_token } = data.body;
 
     // Store tokens in HTTP-only cookies
-    res.cookie("access_token", access_token, { httpOnly: true });
-    res.cookie("refresh_token", refresh_token, { httpOnly: true });
+    res.cookie("access_token", access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+    });
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+    });
 
-    res.redirect("http://localhost:3000/playlists");
+    res.redirect("https://www.sptfymngr.site/playlists");
   } catch (error) {
     console.error("Error getting tokens:", error);
-    res.redirect("http://localhost:3000/error");
+    res.redirect("https://www.sptfymngr.site/error");
   }
 });
 
