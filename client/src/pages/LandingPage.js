@@ -7,9 +7,7 @@ export default function LandingPage() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("https://spotify-manager.vercel.app/login", {
-        credentials: "include",
-      });
+      const response = await fetch("https://spotify-manager.vercel.app/login");
 
       const data = await response.json();
       window.location.href = data.url; // Redirect user to Spotify login

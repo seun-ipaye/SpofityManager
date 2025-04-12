@@ -41,6 +41,7 @@ app.get("/token", (req, res) => {
 });
 
 // 🔑 Login Endpoint - Redirects user to Spotify Auth
+// Update your /login endpoint
 app.get("/login", (req, res) => {
   const scopes = [
     "playlist-read-private",
@@ -50,8 +51,19 @@ app.get("/login", (req, res) => {
     "user-read-private",
     "user-read-email",
   ];
+
+  // Add explicit CORS headers
+  res.header("Access-Control-Allow-Origin", "https://www.sptfymngr.site");
+  res.header("Access-Control-Allow-Credentials", "true");
+
   const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
   res.json({ url: authorizeURL });
+});
+
+app.use((req, res, next) => {
+  console.log("Incoming Origin:", req.headers.origin);
+  console.log("Request Headers:", req.headers);
+  next();
 });
 
 // 🔄 Callback Endpoint - Handles Token Exchange
