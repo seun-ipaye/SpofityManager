@@ -7,8 +7,11 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
-const allowedOrigins = ["http://localhost:3000", "https://www.sptfymngr.site"];
-
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://www.sptfymngr.site", // Your live domain
+  "https://spotify-manager.vercel.app", // Fallback
+];
 app.use(
   cors({
     origin: function (origin, callback) {
