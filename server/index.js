@@ -1,155 +1,82 @@
 const express = require("express");
-const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const SpotifyWebApi = require("spotify-web-api-node");
+const cors = require("cors");
+const axios = require("axios");
 require("dotenv").config();
 
 const app = express();
+const PORT = process.env.PORT || 5001;
 
-// Middleware
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://www.sptfymngr.site", // Your live domain
-  "https://spotify-manager.vercel.app", // Fallback
-];
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "https://sptfymngr.site",
     credentials: true,
   })
 );
-
 app.use(cookieParser());
 app.use(express.json());
 
-const spotifyApi = new SpotifyWebApi({
-  clientId: process.env.SPOTIFY_CLIENT_ID,
-  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "https://spotify-manager.vercel.app/callback", // ✅ use this
-});
+const client_id = process.env.SPOTIFY_CLIENT_ID;
+const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
+const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
 
-// Get stored access token
-app.get("/token", (req, res) => {
-  const accessToken = req.cookies.access_token;
-  if (!accessToken) {
-    return res.status(401).json({ error: "Access token not found" });
-  }
-  res.json({ access_token: accessToken });
-});
-
-// 🔑 Login Endpoint - Redirects user to Spotify Auth
-// Update your /login endpoint
+// Redirect user to Spotify login
 app.get("/login", (req, res) => {
-  const scopes = [
-    "playlist-read-private",
-    "playlist-read-collaborative",
-    "playlist-modify-public",
-    "playlist-modify-private",
-    "user-read-private",
-    "user-read-email",
-  ];
-
-  // Add explicit CORS headers
-  res.header("Access-Control-Allow-Origin", "https://www.sptfymngr.site");
-  res.header("Access-Control-Allow-Credentials", "true");
-
-  const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
-  res.json({ url: authorizeURL });
+  const scope = "playlist-read-private user-read-email";
+  const authURL = `https://accounts.spotify.com/authorize?response_type=code&client_id=${client_id}&scope=${encodeURIComponent(
+    scope
+  )}&redirect_uri=${encodeURIComponent(redirect_uri)}`;
+  res.json({ url: authURL });
 });
 
-app.use((req, res, next) => {
-  console.log("Incoming Origin:", req.headers.origin);
-  console.log("Request Headers:", req.headers);
-  next();
+// Spotify callback
+app.get("/auth/callback", async (req, res) => {
+  const code = req.query.code || null;
+  const response = await axios.post(
+    "https://accounts.spotify.com/api/token",
+    new URLSearchParams({
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: redirect_uri,
+      client_id,
+      client_secret,
+    }),
+    {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    }
+  );
+
+  const { access_token, refresh_token } = response.data;
+
+  res.cookie("access_token", access_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "None",
+  });
+
+  res.redirect("https://sptfymngr.site/playlists");
 });
 
-// 🔄 Callback Endpoint - Handles Token Exchange
-app.get("/callback", async (req, res) => {
-  const { code } = req.query;
-
-  try {
-    const data = await spotifyApi.authorizationCodeGrant(code);
-    const { access_token, refresh_token } = data.body;
-
-    // Store tokens in HTTP-only cookies
-    res.cookie("access_token", access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-    });
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-    });
-
-    res.redirect("https://www.sptfymngr.site/playlists");
-  } catch (error) {
-    console.error("Error getting tokens:", error);
-    res.redirect("https://www.sptfymngr.site/error");
-  }
-});
-
-// 🎵 Get User's Playlists
+// Get playlists using token from cookie
 app.get("/playlists", async (req, res) => {
-  const accessToken = req.cookies.access_token;
-  spotifyApi.setAccessToken(accessToken);
-
+  const access_token = req.cookies.access_token;
   try {
-    const data = await spotifyApi.getUserPlaylists();
-    res.json(data.body);
+    const response = await axios.get(
+      "https://api.spotify.com/v1/me/playlists",
+      {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      }
+    );
+    res.json(response.data);
   } catch (error) {
-    console.error("Error getting playlists:", error);
-    res.status(500).json({ error: "Failed to fetch playlists" });
+    res.status(400).json({ error: "Failed to fetch playlists" });
   }
 });
 
-// 🎶 Get Tracks from a Playlist
-app.get("/playlist/:playlistId/tracks", async (req, res) => {
-  const { playlistId } = req.params;
-  const accessToken = req.cookies.access_token;
-  spotifyApi.setAccessToken(accessToken);
-
-  try {
-    const data = await spotifyApi.getPlaylistTracks(playlistId);
-    res.json(data.body);
-  } catch (error) {
-    console.error("Error getting playlist tracks:", error);
-    res.status(500).json({ error: "Failed to fetch playlist tracks" });
-  }
-});
-
-// ➕ Add Track to a Playlist
-app.post("/playlists/:playlistId/tracks", async (req, res) => {
-  const { playlistId } = req.params;
-  const { trackUri } = req.body;
-  const accessToken = req.cookies.access_token;
-  spotifyApi.setAccessToken(accessToken);
-
-  try {
-    await spotifyApi.addTracksToPlaylist(playlistId, [trackUri]);
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Error adding track:", error);
-    res.status(500).json({ error: "Failed to add track" });
-  }
-});
-
-// 🚪 Logout Endpoint
-app.post("/logout", (req, res) => {
-  res.clearCookie("access_token");
-  res.clearCookie("refresh_token");
-  res.status(200).json({ message: "Logged out successfully" });
-});
-
-// 🚀 Start Server
-const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
