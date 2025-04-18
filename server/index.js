@@ -2,10 +2,11 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const axios = require("axios");
+const serverless = require("serverless-http"); // NEW
+
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 5001;
 
 app.use(
   cors({
@@ -20,7 +21,6 @@ const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 const redirect_uri = process.env.SPOTIFY_REDIRECT_URI;
 
-// Redirect user to Spotify login
 app.get("/login", (req, res) => {
   const scope = "playlist-read-private user-read-email";
   const authURL = `https://accounts.spotify.com/authorize?response_type=code&client_id=${client_id}&scope=${encodeURIComponent(
@@ -29,7 +29,6 @@ app.get("/login", (req, res) => {
   res.json({ url: authURL });
 });
 
-// Spotify callback
 app.get("/auth/callback", async (req, res) => {
   const code = req.query.code || null;
   const response = await axios.post(
@@ -59,7 +58,6 @@ app.get("/auth/callback", async (req, res) => {
   res.redirect("https://sptfymngr.site/playlists");
 });
 
-// Get playlists using token from cookie
 app.get("/playlists", async (req, res) => {
   const access_token = req.cookies.access_token;
   try {
@@ -77,6 +75,8 @@ app.get("/playlists", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// ⛔️ REMOVE THIS FOR VERCEL:
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// ✅ EXPORT for Vercel serverless:
+module.exports = serverless(app);
