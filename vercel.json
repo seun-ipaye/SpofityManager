@@ -1,28 +1,7 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/server/index.js"
-    }
-  ],
   "builds": [
-    {
-      "src": "client/package.json",
-      "use": "@vercel/react"
-    },
-    {
-      "src": "server/index.js",
-      "use": "@vercel/node"
-    }
+    { "src": "client/package.json", "use": "@vercel/react" },
+    { "src": "server/index.js", "use": "@vercel/node" }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "server/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "client/src/index.js"
-    }
-  ]
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/server/index.js" }]
 }
