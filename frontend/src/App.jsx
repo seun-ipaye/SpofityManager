@@ -12,7 +12,7 @@ function App() {
   }, []);
 
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    window.location.href = "https://spofitymanager.onrender.com/api/login";
   };
 
   return (
