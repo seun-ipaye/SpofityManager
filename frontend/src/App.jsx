@@ -6,7 +6,9 @@ function App() {
 
   useEffect(() => {
     axios
-      .get("/api/me", { withCredentials: true })
+      .get("https://spofitymanager.onrender.com/api/me", {
+        withCredentials: true,
+      })
       .then((res) => setUser(res.data))
       .catch(() => console.log("User not logged in"));
   }, []);
