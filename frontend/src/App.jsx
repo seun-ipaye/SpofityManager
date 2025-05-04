@@ -8,7 +8,7 @@ function App() {
     axios
       .get("/api/me", { withCredentials: true })
       .then((res) => setUser(res.data))
-      .catch((err) => console.log("Not logged in"));
+      .catch(() => console.log("User not logged in"));
   }, []);
 
   const handleLogin = () => {
