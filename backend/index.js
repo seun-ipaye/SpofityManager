@@ -4,9 +4,16 @@ const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const querystring = require("querystring");
 
+const cors = require("cors");
 dotenv.config();
 
 const app = express();
+app.use(
+  cors({
+    origin: "https://www.sptfymngr.site",
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
 const {
@@ -71,13 +78,13 @@ app.get("/api/callback", async (req, res) => {
     res.cookie("access_token", access_token, {
       httpOnly: true,
       secure: true,
-      sameSite: "Strict",
+      sameSite: "None",
       maxAge: 3600 * 1000,
     });
     res.cookie("refresh_token", refresh_token, {
       httpOnly: true,
       secure: true,
-      sameSite: "Strict",
+      sameSite: "None",
     });
 
     res.redirect(`${FRONTEND_URI}`);
