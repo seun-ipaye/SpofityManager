@@ -62,7 +62,7 @@ function App() {
             Edit Your Playlists!
           </h1>
           <p style={{ fontSize: "1.125rem", marginBottom: "1.5rem" }}>
-            Easily modify your Spotify playlists
+            Dont modify your Spotify playlists
           </p>
           <button
             onClick={handleLogin}
