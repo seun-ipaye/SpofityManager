@@ -15,12 +15,9 @@ function PlaylistsPage() {
 
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch(
-        "https://spotify-manager.vercel.app/playlists",
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch("http://localhost:5001/playlists", {
+        credentials: "include",
+      });
       const data = await response.json();
       setPlaylists(data.items);
     } catch (error) {
@@ -30,7 +27,7 @@ function PlaylistsPage() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch("https://spotify-manager.vercel.app/user", {
+      const response = await fetch("http://localhost:5001/user", {
         credentials: "include",
       });
       const data = await response.json();

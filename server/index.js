@@ -7,31 +7,19 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://www.sptfymngr.site", // Your live domain
-  "https://spotify-manager.vercel.app", // Fallback
-];
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
-
 app.use(cookieParser());
 app.use(express.json());
 
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "https://spotify-manager.vercel.app/callback", // ✅ use this
+  redirectUri: "http://localhost:5001/callback",
 });
 
 // Get stored access token
@@ -44,7 +32,6 @@ app.get("/token", (req, res) => {
 });
 
 // 🔑 Login Endpoint - Redirects user to Spotify Auth
-// Update your /login endpoint
 app.get("/login", (req, res) => {
   const scopes = [
     "playlist-read-private",
@@ -54,19 +41,8 @@ app.get("/login", (req, res) => {
     "user-read-private",
     "user-read-email",
   ];
-
-  // Add explicit CORS headers
-  res.header("Access-Control-Allow-Origin", "https://www.sptfymngr.site");
-  res.header("Access-Control-Allow-Credentials", "true");
-
   const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
   res.json({ url: authorizeURL });
-});
-
-app.use((req, res, next) => {
-  console.log("Incoming Origin:", req.headers.origin);
-  console.log("Request Headers:", req.headers);
-  next();
 });
 
 // 🔄 Callback Endpoint - Handles Token Exchange
@@ -78,21 +54,13 @@ app.get("/callback", async (req, res) => {
     const { access_token, refresh_token } = data.body;
 
     // Store tokens in HTTP-only cookies
-    res.cookie("access_token", access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-    });
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-    });
+    res.cookie("access_token", access_token, { httpOnly: true });
+    res.cookie("refresh_token", refresh_token, { httpOnly: true });
 
-    res.redirect("https://www.sptfymngr.site/playlists");
+    res.redirect("http://localhost:3000/playlists");
   } catch (error) {
     console.error("Error getting tokens:", error);
-    res.redirect("https://www.sptfymngr.site/error");
+    res.redirect("http://localhost:3000/error");
   }
 });
 
