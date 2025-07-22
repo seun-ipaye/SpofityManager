@@ -79,12 +79,14 @@ app.get("/api/callback", async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
+      domain: ".sptfymngr.site", // ✅ include this line
       maxAge: 3600 * 1000,
     });
     res.cookie("refresh_token", refresh_token, {
       httpOnly: true,
       secure: true,
       sameSite: "None",
+      domain: ".sptfymngr.site", // ✅ again here
     });
 
     res.redirect(`${FRONTEND_URI}`);
