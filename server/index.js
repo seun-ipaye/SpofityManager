@@ -123,7 +123,66 @@ app.post("/logout", (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 });
 
+// Helper to refresh access token using stored refresh token
+async function refreshAccessToken(req, res) {
+  const refreshToken = req.cookies.refresh_token;
+  if (!refreshToken) {
+    return { error: "Session expired. Please log in again." };
+  }
+
+  try {
+    spotifyApi.setRefreshToken(refreshToken);
+    const { body } = await spotifyApi.refreshAccessToken();
+    const newAccessToken = body.access_token;
+    res.cookie("access_token", newAccessToken, { httpOnly: true });
+    spotifyApi.setAccessToken(newAccessToken);
+    return { accessToken: newAccessToken };
+  } catch (error) {
+    console.error("Error refreshing access token:", error);
+    return { error: "Failed to refresh access token." };
+  }
+}
+
+// 👤 Get current Spotify user profile
+app.get("/user", async (req, res) => {
+  const accessToken = req.cookies.access_token;
+
+  if (!accessToken) {
+    return res.status(401).json({ error: "Access token not found" });
+  }
+
+  spotifyApi.setAccessToken(accessToken);
+
+  try {
+    const { body } = await spotifyApi.getMe();
+    return res.json(body);
+  } catch (error) {
+    if (error.statusCode === 401) {
+      const refreshed = await refreshAccessToken(req, res);
+      if (refreshed.error) {
+        return res.status(401).json({ error: refreshed.error });
+      }
+
+      try {
+        const { body } = await spotifyApi.getMe();
+        return res.json(body);
+      } catch (retryError) {
+        console.error("Error fetching user after token refresh:", retryError);
+        return res
+          .status(500)
+          .json({ error: "Failed to fetch user profile. Please try again." });
+      }
+    }
+
+    console.error("Error getting user profile:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch user profile. Please try again." });
+  }
+});
+
 // 🚀 Start Server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
