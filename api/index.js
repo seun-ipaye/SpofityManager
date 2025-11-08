@@ -8,10 +8,28 @@ const {
   CLIENT_BASE_URLS,
   CLIENT_BASE_URL,
   SPOTIFY_REDIRECT_URI,
+  COOKIE_DOMAIN,
 } = require("./config");
 
 const app = express();
 const baseClientUrl = CLIENT_BASE_URL.replace(/\/$/, "");
+
+const buildCookieOptions = () => {
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  };
+
+  if (COOKIE_DOMAIN) {
+    options.domain = COOKIE_DOMAIN;
+  }
+
+  return options;
+};
+
+const cookieOptions = buildCookieOptions();
+const clearCookieOptions = { ...cookieOptions };
 
 // Middleware
 app.use(
@@ -61,8 +79,8 @@ app.get("/callback", async (req, res) => {
     const { access_token, refresh_token } = data.body;
 
     // Store tokens in HTTP-only cookies
-    res.cookie("access_token", access_token, { httpOnly: true });
-    res.cookie("refresh_token", refresh_token, { httpOnly: true });
+    res.cookie("access_token", access_token, cookieOptions);
+    res.cookie("refresh_token", refresh_token, cookieOptions);
 
     res.redirect(`${baseClientUrl}/playlists`);
   } catch (error) {
@@ -118,8 +136,8 @@ app.post("/playlists/:playlistId/tracks", async (req, res) => {
 
 // 🚪 Logout Endpoint
 app.post("/logout", (req, res) => {
-  res.clearCookie("access_token");
-  res.clearCookie("refresh_token");
+  res.clearCookie("access_token", clearCookieOptions);
+  res.clearCookie("refresh_token", clearCookieOptions);
   res.status(200).json({ message: "Logged out successfully" });
 });
 
@@ -134,7 +152,7 @@ async function refreshAccessToken(req, res) {
     spotifyApi.setRefreshToken(refreshToken);
     const { body } = await spotifyApi.refreshAccessToken();
     const newAccessToken = body.access_token;
-    res.cookie("access_token", newAccessToken, { httpOnly: true });
+    res.cookie("access_token", newAccessToken, cookieOptions);
     spotifyApi.setAccessToken(newAccessToken);
     return { accessToken: newAccessToken };
   } catch (error) {

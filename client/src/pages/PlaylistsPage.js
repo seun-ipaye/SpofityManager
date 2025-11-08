@@ -53,6 +53,19 @@ function PlaylistsPage() {
     navigate("/comparison", { state: { selectedPlaylists } });
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    } finally {
+      navigate("/");
+    }
+  };
+
   const cancelComparison = () => {
     setSelectedPlaylists([]);
     setShowModal(false);
@@ -84,17 +97,7 @@ function PlaylistsPage() {
       </button>
 
       <button
-        onClick={() => {
-          document.cookie.split(";").forEach((c) => {
-            document.cookie = c
-              .replace(/^ +/, "")
-              .replace(
-                /=.*/,
-                "=;expires=" + new Date().toUTCString() + ";path=/"
-              );
-          });
-          navigate("/");
-        }}
+        onClick={handleLogout}
         style={{
           position: "absolute",
           top: "1rem",
