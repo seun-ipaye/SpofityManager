@@ -8,7 +8,9 @@ export default function LandingPage() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/login`);
+      const response = await fetch(`${API_BASE_URL}/login`, {
+        credentials: "include",
+      });
       const data = await response.json();
       window.location.href = data.url; // Redirect user to Spotify login
     } catch (error) {
