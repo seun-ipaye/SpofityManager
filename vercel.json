@@ -2,14 +2,42 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.js",
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    },
+    {
+      "src": "api/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "server.js"
+      "dest": "/client/build/index.html"
     }
-  ]
+  ],
+  "env": {
+    "API_BASE_URL": "@api-base-url",
+    "CLIENT_BASE_URL": "@client-base-url",
+    "SPOTIFY_REDIRECT_URI": "@spotify-redirect-uri",
+    "SPOTIFY_CLIENT_ID": "@spotify-client-id",
+    "SPOTIFY_CLIENT_SECRET": "@spotify-client-secret"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_API_BASE_URL": "@api-base-url",
+      "REACT_APP_CLIENT_BASE_URL": "@client-base-url",
+      "REACT_APP_SPOTIFY_REDIRECT_URI": "@spotify-redirect-uri"
+    }
+  }
 }
