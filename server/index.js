@@ -2,14 +2,21 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const SpotifyWebApi = require("spotify-web-api-node");
-require("dotenv").config();
+
+const {
+  PORT,
+  CLIENT_BASE_URLS,
+  CLIENT_BASE_URL,
+  SPOTIFY_REDIRECT_URI,
+} = require("./config");
 
 const app = express();
+const baseClientUrl = CLIENT_BASE_URL.replace(/\/$/, "");
 
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: CLIENT_BASE_URLS,
     credentials: true,
   })
 );
@@ -19,7 +26,7 @@ app.use(express.json());
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "http://localhost:5001/callback",
+  redirectUri: SPOTIFY_REDIRECT_URI,
 });
 
 // Get stored access token
@@ -57,10 +64,10 @@ app.get("/callback", async (req, res) => {
     res.cookie("access_token", access_token, { httpOnly: true });
     res.cookie("refresh_token", refresh_token, { httpOnly: true });
 
-    res.redirect("http://localhost:3000/playlists");
+    res.redirect(`${baseClientUrl}/playlists`);
   } catch (error) {
     console.error("Error getting tokens:", error);
-    res.redirect("http://localhost:3000/error");
+    res.redirect(`${baseClientUrl}/error`);
   }
 });
 
@@ -117,7 +124,6 @@ app.post("/logout", (req, res) => {
 });
 
 // 🚀 Start Server
-const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { API_BASE_URL } from "../config/env";
 
 export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -7,7 +8,7 @@ export default function LandingPage() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/login");
+      const response = await fetch(`${API_BASE_URL}/login`);
       const data = await response.json();
       window.location.href = data.url; // Redirect user to Spotify login
     } catch (error) {

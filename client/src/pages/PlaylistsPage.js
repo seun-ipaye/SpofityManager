@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config/env";
 
 function PlaylistsPage() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ function PlaylistsPage() {
 
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch("http://localhost:5001/playlists", {
+      const response = await fetch(`${API_BASE_URL}/playlists`, {
         credentials: "include",
       });
       const data = await response.json();
@@ -27,7 +28,7 @@ function PlaylistsPage() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch("http://localhost:5001/user", {
+      const response = await fetch(`${API_BASE_URL}/user`, {
         credentials: "include",
       });
       const data = await response.json();

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../config/env";
 
 function ComparisonPage() {
   const location = useLocation();
@@ -24,7 +25,7 @@ function ComparisonPage() {
     for (const playlist of selectedPlaylists) {
       try {
         const response = await fetch(
-          `http://localhost:5001/playlist/${playlist.id}/tracks`,
+          `${API_BASE_URL}/playlist/${playlist.id}/tracks`,
           { credentials: "include" }
         );
         if (!response.ok) {
@@ -43,7 +44,7 @@ function ComparisonPage() {
     const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
 
     try {
-      const tokenResponse = await fetch("http://localhost:5001/token", {
+      const tokenResponse = await fetch(`${API_BASE_URL}/token`, {
         credentials: "include",
       });
       const tokenData = await tokenResponse.json();
@@ -114,7 +115,7 @@ function ComparisonPage() {
     const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=${encodedUri}`;
 
     try {
-      const tokenResponse = await fetch("http://localhost:5001/token", {
+      const tokenResponse = await fetch(`${API_BASE_URL}/token`, {
         credentials: "include",
       });
       const tokenData = await tokenResponse.json();
