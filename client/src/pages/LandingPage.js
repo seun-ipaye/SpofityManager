@@ -4,17 +4,8 @@ export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch("https://spotify-manager.vercel.app/login");
-
-      const data = await response.json();
-      window.location.href = data.url; // Redirect user to Spotify login
-    } catch (error) {
-      console.error("Error during login:", error);
-      setIsLoading(false);
-    }
+  const handleLogin = () => {
+    window.location.href = "http://127.0.0.1:5001/login";
   };
 
   return (

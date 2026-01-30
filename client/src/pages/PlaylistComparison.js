@@ -5,6 +5,7 @@ function ComparisonPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedPlaylists = location.state?.selectedPlaylists || [];
+  const API_BASE = "http://127.0.0.1:5001";
 
   const [playlists, setPlaylists] = useState(selectedPlaylists);
   const [tracks, setTracks] = useState({});
@@ -24,8 +25,8 @@ function ComparisonPage() {
     for (const playlist of selectedPlaylists) {
       try {
         const response = await fetch(
-          `https://spotify-manager.vercel.app/playlist/${playlist.id}/tracks`,
-          { credentials: "include" }
+          `${API_BASE}/playlist/${playlist.id}/tracks`,
+          { credentials: "include" },
         );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -47,7 +48,7 @@ function ComparisonPage() {
         "https://spotify-manager.vercel.app/token",
         {
           credentials: "include",
-        }
+        },
       );
       const tokenData = await tokenResponse.json();
       if (!tokenResponse.ok) {
@@ -121,7 +122,7 @@ function ComparisonPage() {
         "https://spotify-manager.vercel.app/token",
         {
           credentials: "include",
-        }
+        },
       );
       const tokenData = await tokenResponse.json();
       if (!tokenResponse.ok) {

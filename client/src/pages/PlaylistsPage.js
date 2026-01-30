@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE = "http://127.0.0.1:5001";
+
 function PlaylistsPage() {
   const navigate = useNavigate();
   const [playlists, setPlaylists] = useState([]);
@@ -11,32 +13,46 @@ function PlaylistsPage() {
   useEffect(() => {
     fetchPlaylists();
     fetchUserProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPlaylists = async () => {
     try {
-      const response = await fetch(
-        "https://spotify-manager.vercel.app/playlists",
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${API_BASE}/playlists`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch playlists: ${response.status}`);
+      }
+
       const data = await response.json();
-      setPlaylists(data.items);
+      console.log("Playlists response from backend:", data);
+
+      // make sure we always set an array
+      const items = Array.isArray(data.items) ? data.items : [];
+      setPlaylists(items);
     } catch (error) {
       console.error("Error fetching playlists:", error);
+      setPlaylists([]); // keep it as an array so .map is safe
     }
   };
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch("https://spotify-manager.vercel.app/user", {
+      const response = await fetch(`${API_BASE}/user`, {
         credentials: "include",
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user profile: ${response.status}`);
+      }
+
       const data = await response.json();
       setUser(data);
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      setUser(null);
     }
   };
 
@@ -45,7 +61,7 @@ function PlaylistsPage() {
 
     if (selectedPlaylists.length === 1) {
       setSelectedPlaylists([...selectedPlaylists, playlist]);
-      setShowModal(true); // Show confirmation popup
+      setShowModal(true);
     } else {
       setSelectedPlaylists([playlist]);
     }
@@ -60,6 +76,16 @@ function PlaylistsPage() {
     setShowModal(false);
   };
 
+  const handleLogout = () => {
+    // clear all cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace("=.+", "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    navigate("/");
+  };
+
   return (
     <div
       style={{
@@ -69,6 +95,7 @@ function PlaylistsPage() {
         color: "white",
       }}
     >
+      {/* Back button */}
       <button
         onClick={() => navigate("/")}
         style={{
@@ -85,18 +112,9 @@ function PlaylistsPage() {
         ←
       </button>
 
+      {/* Logout button */}
       <button
-        onClick={() => {
-          document.cookie.split(";").forEach((c) => {
-            document.cookie = c
-              .replace(/^ +/, "")
-              .replace(
-                /=.*/,
-                "=;expires=" + new Date().toUTCString() + ";path=/"
-              );
-          });
-          navigate("/");
-        }}
+        onClick={handleLogout}
         style={{
           position: "absolute",
           top: "1rem",
@@ -112,6 +130,7 @@ function PlaylistsPage() {
         Logout
       </button>
 
+      {/* User profile */}
       {user && (
         <div
           style={{
@@ -148,6 +167,7 @@ function PlaylistsPage() {
         Select two playlists to compare
       </h2>
 
+      {/* Playlists grid */}
       <div
         style={{
           display: "grid",
@@ -155,49 +175,58 @@ function PlaylistsPage() {
           gap: "1rem",
         }}
       >
-        {playlists.map((playlist) => (
-          <div
-            key={playlist.id}
-            onClick={() => handlePlaylistSelect(playlist)}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              padding: "1rem",
-              border: selectedPlaylists.includes(playlist)
-                ? "2px solid #1DB954"
-                : "1px solid #e2e8f0",
-              borderRadius: "0.5rem",
-              cursor: "pointer",
-              backgroundColor: "rgb(15, 15, 15)",
-            }}
-          >
-            <img
-              src={playlist.images?.[0]?.url || "/placeholder.png"}
-              alt={playlist.name}
+        {Array.isArray(playlists) && playlists.length > 0 ? (
+          playlists.map((playlist) => (
+            <div
+              key={playlist.id}
+              onClick={() => handlePlaylistSelect(playlist)}
               style={{
-                width: "100%",
-                aspectRatio: "1 / 1",
-                objectFit: "cover",
-                marginBottom: "0.5rem",
-              }}
-            />
-            <h3
-              style={{
-                fontWeight: "bold",
-                marginBottom: "0.25rem",
-                color: "white",
+                display: "flex",
+                flexDirection: "column",
+                padding: "1rem",
+                border: selectedPlaylists.includes(playlist)
+                  ? "2px solid #1DB954"
+                  : "1px solid #e2e8f0",
+                borderRadius: "0.5rem",
+                cursor: "pointer",
+                backgroundColor: "rgb(15, 15, 15)",
               }}
             >
-              {playlist.name}
-            </h3>
-            <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
-              {playlist.tracks.total} tracks
-            </p>
-          </div>
-        ))}
+              <img
+                src={playlist.images?.[0]?.url || "/placeholder.png"}
+                alt={playlist.name}
+                style={{
+                  width: "100%",
+                  aspectRatio: "1 / 1",
+                  objectFit: "cover",
+                  marginBottom: "0.5rem",
+                }}
+              />
+              <h3
+                style={{
+                  fontWeight: "bold",
+                  marginBottom: "0.25rem",
+                  color: "white",
+                }}
+              >
+                {playlist.name}
+              </h3>
+              <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+                {playlist.tracks?.total ?? 0} tracks
+              </p>
+            </div>
+          ))
+        ) : (
+          <p style={{ color: "#64748b" }}>
+            {Array.isArray(playlists)
+              ? "No playlists found."
+              : "Loading playlists..."}
+          </p>
+        )}
       </div>
 
-      {showModal && (
+      {/* Comparison modal */}
+      {showModal && selectedPlaylists.length === 2 && (
         <div
           style={{
             position: "fixed",

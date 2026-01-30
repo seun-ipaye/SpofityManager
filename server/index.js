@@ -7,11 +7,7 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://www.sptfymngr.site", // Your live domain
-  "https://spotify-manager.vercel.app", // Fallback
-];
+const allowedOrigins = ["http://localhost:3000"];
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -22,7 +18,7 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(cookieParser());
@@ -31,8 +27,9 @@ app.use(express.json());
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "https://spotify-manager.vercel.app/callback", // ✅ use this
+  redirectUri: "http://127.0.0.1:5001/callback", // ✅ use this
 });
+console.log("SPOTIFY_CLIENT_ID:", process.env.SPOTIFY_CLIENT_ID);
 
 // Get stored access token
 app.get("/token", (req, res) => {
@@ -54,13 +51,8 @@ app.get("/login", (req, res) => {
     "user-read-private",
     "user-read-email",
   ];
-
-  // Add explicit CORS headers
-  res.header("Access-Control-Allow-Origin", "https://www.sptfymngr.site");
-  res.header("Access-Control-Allow-Credentials", "true");
-
   const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
-  res.json({ url: authorizeURL });
+  res.redirect(authorizeURL); // ⬅️ redirect instead of res.json
 });
 
 app.use((req, res, next) => {
@@ -89,10 +81,10 @@ app.get("/callback", async (req, res) => {
       sameSite: "None",
     });
 
-    res.redirect("https://www.sptfymngr.site/playlists");
+    res.redirect("http://localhost:3000/playlists");
   } catch (error) {
     console.error("Error getting tokens:", error);
-    res.redirect("https://www.sptfymngr.site/error");
+    res.redirect("http://localhost:3000/");
   }
 });
 
