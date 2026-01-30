@@ -11,6 +11,7 @@ function ComparisonPage() {
   const [tracks, setTracks] = useState({});
   const [selectedSong, setSelectedSong] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [songToDelete, setSongToDelete] = useState(null);
@@ -106,7 +107,7 @@ function ComparisonPage() {
     // Check for duplicates
     for (const t of strack) {
       if (t?.track?.uri === songURI) {
-        alert("This song is already in this playlist!");
+        setShowDuplicateModal(true);
         return;
       }
     }
@@ -427,6 +428,54 @@ function ComparisonPage() {
                 }}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDuplicateModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#282828",
+              padding: "2rem",
+              borderRadius: "8px",
+              width: "300px",
+              textAlign: "center",
+            }}
+          >
+            <h3 style={{ marginBottom: "1rem" }}>
+              This song is already in this playlist!
+            </h3>
+
+            <div
+              style={{ display: "flex", justifyContent: "center", gap: "1rem" }}
+            >
+              <button
+                onClick={() => setShowDuplicateModal(false)}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "20px",
+                  border: "none",
+                  background: "#5b5b5b",
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                OK
               </button>
             </div>
           </div>
