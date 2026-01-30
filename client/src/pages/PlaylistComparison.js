@@ -44,12 +44,9 @@ function ComparisonPage() {
     const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
 
     try {
-      const tokenResponse = await fetch(
-        "https://spotify-manager.vercel.app/token",
-        {
-          credentials: "include",
-        },
-      );
+      const tokenResponse = await fetch("http://127.0.0.1:5001/token", {
+        credentials: "include",
+      });
       const tokenData = await tokenResponse.json();
       if (!tokenResponse.ok) {
         throw new Error(`Failed to fetch token: ${JSON.stringify(tokenData)}`);
@@ -118,12 +115,9 @@ function ComparisonPage() {
     const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=${encodedUri}`;
 
     try {
-      const tokenResponse = await fetch(
-        "https://spotify-manager.vercel.app/token",
-        {
-          credentials: "include",
-        },
-      );
+      const tokenResponse = await fetch("http://127.0.0.1:5001/token", {
+        credentials: "include",
+      });
       const tokenData = await tokenResponse.json();
       if (!tokenResponse.ok) {
         throw new Error(`Failed to fetch token: ${JSON.stringify(tokenData)}`);
