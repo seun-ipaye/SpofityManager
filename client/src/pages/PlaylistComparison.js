@@ -46,7 +46,7 @@ function ComparisonPage() {
     const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
 
     try {
-      const tokenResponse = await fetch("http://127.0.0.1:5001/token", {
+      const tokenResponse = await fetch(`${API_BASE}/token`, {
         credentials: "include",
       });
       const tokenData = await tokenResponse.json();
@@ -117,7 +117,7 @@ function ComparisonPage() {
     const url = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?uris=${encodedUri}`;
 
     try {
-      const tokenResponse = await fetch("http://127.0.0.1:5001/token", {
+      const tokenResponse = await fetch(`${API_BASE}/token`, {
         credentials: "include",
       });
       const tokenData = await tokenResponse.json();

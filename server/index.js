@@ -7,7 +7,11 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://spofitymanager-qa.vercel.app",
+];
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -27,7 +31,7 @@ app.use(express.json());
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "http://127.0.0.1:5001/callback", // ✅ use this
+  redirectUri: "https://spofitymanager-qa.vercel.app/api/callback", // ✅ use this
 });
 console.log("SPOTIFY_CLIENT_ID:", process.env.SPOTIFY_CLIENT_ID);
 
@@ -81,10 +85,11 @@ app.get("/callback", async (req, res) => {
       sameSite: "None",
     });
 
-    res.redirect("http://localhost:3000/playlists");
+    res.redirect("/playlists");
   } catch (error) {
     console.error("Error getting tokens:", error);
-    res.redirect("http://localhost:3000/");
+    // ✅ relative redirect
+    res.redirect("/");
   }
 });
 

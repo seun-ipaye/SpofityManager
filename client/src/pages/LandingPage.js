@@ -4,8 +4,11 @@ export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  const API_BASE =
+    process.env.NODE_ENV === "development" ? "http://127.0.0.1:5001" : "/api";
+
   const handleLogin = () => {
-    window.location.href = "http://127.0.0.1:5001/login";
+    window.location.href = `${API_BASE}/login`;
   };
 
   return (
