@@ -9,8 +9,8 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://spotify-manager-qa.vercel.app",
-];
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
 app.use(
   cors({
@@ -31,7 +31,7 @@ app.use(express.json());
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-  redirectUri: "https://spotify-manager-qa.vercel.app/api/callback", // ✅ use this
+  redirectUri: process.env.SPOTIFY_REDIRECT_URI,
 });
 console.log("SPOTIFY_CLIENT_ID:", process.env.SPOTIFY_CLIENT_ID);
 
