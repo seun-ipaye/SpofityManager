@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://spofitymanager-qa.onrender.com/$1"
+      "destination": "https://spofitymanager.onrender.com/$1"
     }
   ]
 }
