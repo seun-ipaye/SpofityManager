@@ -66,6 +66,7 @@ app.use((req, res, next) => {
 });
 
 // 🔄 Callback Endpoint - Handles Token Exchange
+// 🔄 Callback Endpoint - Handles Token Exchange
 app.get("/callback", async (req, res) => {
   const { code } = req.query;
 
@@ -73,22 +74,21 @@ app.get("/callback", async (req, res) => {
     const data = await spotifyApi.authorizationCodeGrant(code);
     const { access_token, refresh_token } = data.body;
 
-    // Store tokens in HTTP-only cookies
-    res.cookie("access_token", access_token, {
+    // ✅ IMPORTANT: include path "/" so cookies apply site-wide and can be cleared later
+    const cookieOptions = {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-    });
-    res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "None",
-    });
+      path: "/",
+    };
 
+    res.cookie("access_token", access_token, cookieOptions);
+    res.cookie("refresh_token", refresh_token, cookieOptions);
+
+    // Redirect back to frontend route
     res.redirect("/playlists");
   } catch (error) {
     console.error("Error getting tokens:", error);
-    // ✅ relative redirect
     res.redirect("/");
   }
 });
@@ -96,14 +96,27 @@ app.get("/callback", async (req, res) => {
 // 🎵 Get User's Playlists
 app.get("/playlists", async (req, res) => {
   const accessToken = req.cookies.access_token;
+
+  // ✅ If no cookie, user is logged out
+  if (!accessToken) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
   spotifyApi.setAccessToken(accessToken);
 
   try {
     const data = await spotifyApi.getUserPlaylists();
-    res.json(data.body);
+    return res.json(data.body);
   } catch (error) {
+    const status = error?.statusCode || error?.status;
+
+    // ✅ If token expired/invalid, treat as logged out
+    if (status === 401) {
+      return res.status(401).json({ error: "Token expired or invalid" });
+    }
+
     console.error("Error getting playlists:", error);
-    res.status(500).json({ error: "Failed to fetch playlists" });
+    return res.status(500).json({ error: "Failed to fetch playlists" });
   }
 });
 
@@ -111,14 +124,25 @@ app.get("/playlists", async (req, res) => {
 app.get("/playlist/:playlistId/tracks", async (req, res) => {
   const { playlistId } = req.params;
   const accessToken = req.cookies.access_token;
+
+  if (!accessToken) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
   spotifyApi.setAccessToken(accessToken);
 
   try {
     const data = await spotifyApi.getPlaylistTracks(playlistId);
-    res.json(data.body);
+    return res.json(data.body);
   } catch (error) {
+    const status = error?.statusCode || error?.status;
+
+    if (status === 401) {
+      return res.status(401).json({ error: "Token expired or invalid" });
+    }
+
     console.error("Error getting playlist tracks:", error);
-    res.status(500).json({ error: "Failed to fetch playlist tracks" });
+    return res.status(500).json({ error: "Failed to fetch playlist tracks" });
   }
 });
 
@@ -127,22 +151,46 @@ app.post("/playlists/:playlistId/tracks", async (req, res) => {
   const { playlistId } = req.params;
   const { trackUri } = req.body;
   const accessToken = req.cookies.access_token;
+
+  if (!accessToken) {
+    return res.status(401).json({ error: "Not logged in" });
+  }
+
+  if (!trackUri) {
+    return res.status(400).json({ error: "Missing trackUri" });
+  }
+
   spotifyApi.setAccessToken(accessToken);
 
   try {
     await spotifyApi.addTracksToPlaylist(playlistId, [trackUri]);
-    res.json({ success: true });
+    return res.json({ success: true });
   } catch (error) {
+    const status = error?.statusCode || error?.status;
+
+    if (status === 401) {
+      return res.status(401).json({ error: "Token expired or invalid" });
+    }
+
     console.error("Error adding track:", error);
-    res.status(500).json({ error: "Failed to add track" });
+    return res.status(500).json({ error: "Failed to add track" });
   }
 });
 
 // 🚪 Logout Endpoint
 app.post("/logout", (req, res) => {
-  res.clearCookie("access_token");
-  res.clearCookie("refresh_token");
-  res.status(200).json({ message: "Logged out successfully" });
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true, // must be true on HTTPS
+    sameSite: "None", // required for cross-site cookies (Vercel/Render split)
+    path: "/", // must match what you used when setting
+    // domain: ".yourdomain.com" // ONLY if you set a domain originally
+  };
+
+  res.clearCookie("access_token", cookieOptions);
+  res.clearCookie("refresh_token", cookieOptions);
+
+  return res.status(200).json({ message: "Logged out successfully" });
 });
 
 // 🚀 Start Server

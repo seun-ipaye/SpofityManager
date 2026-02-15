@@ -13,7 +13,7 @@ function PlaylistsPage() {
 
   useEffect(() => {
     fetchPlaylists();
-    fetchUserProfile();
+    // fetchUserProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -23,6 +23,15 @@ function PlaylistsPage() {
         credentials: "include",
       });
 
+      // ✅ If logged out / expired, kick them to landing
+      if (response.status === 401) {
+        setUser(null);
+        setPlaylists([]);
+        setSelectedPlaylists([]);
+        navigate("/", { replace: true });
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`Failed to fetch playlists: ${response.status}`);
       }
@@ -30,12 +39,11 @@ function PlaylistsPage() {
       const data = await response.json();
       console.log("Playlists response from backend:", data);
 
-      // make sure we always set an array
       const items = Array.isArray(data.items) ? data.items : [];
       setPlaylists(items);
     } catch (error) {
       console.error("Error fetching playlists:", error);
-      setPlaylists([]); // keep it as an array so .map is safe
+      setPlaylists([]);
     }
   };
 
@@ -77,14 +85,21 @@ function PlaylistsPage() {
     setShowModal(false);
   };
 
-  const handleLogout = () => {
-    // clear all cookies
-    document.cookie.split(";").forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, "")
-        .replace("=.+", "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (e) {
+      console.error("Logout failed:", e);
+    } finally {
+      // clear UI state no matter what
+      setUser(null);
+      setPlaylists([]);
+      setSelectedPlaylists([]);
+      navigate("/", { replace: true });
+    }
   };
 
   return (
